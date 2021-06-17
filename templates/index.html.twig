@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block content %}
+    {% set currentOrderByQuery = '' %}
+    {% set currentLimitQuery = '' %}
+    {% if orderBy|length > 0 %}
+        {% set currentOrderByQuery = '&orderBy=' ~ orderBy ~ '&order=' ~ (isDesc ? 'desc' : 'asc') %}
+    {% endif %}
+    {% if paginated.limit != paginated.defaultLimit %}
+        {% set currentLimitQuery = '&limit=' ~ paginated.limit %}
+    {% endif %}
+    
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12" style="margin-top: 50px; margin-bottom: 50px;">
+                {% if paginated.items|length > 0 %}
+                    <div class="panel panel-default table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    {% for key, column in columns %}
+                                        <th>
+                                            <a href="/?orderBy={{ key }}&order={% if isDesc %}asc{% else %}desc{% endif %}{{ currentLimitQuery }}">
+                                                {{ column.label }}
+                                                {% if orderBy == key %}
+                                                    {% if isDesc %}
+                                                        <i class="fas fa-sort-amount-down"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-sort-amount-down-alt"></i>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in paginated.items %}
+                                    <tr>
+                                        {% if row.isValid %}
+                                            {% for cell in row.cells %}
+                                                <td style="text-align: {{ cell.relatedColumn.align }};">
+                                                    {% if cell.isValid %}
+                                                        {{ cell }}
+                                                    {% else %}
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                    {% endif %}
+                                                </td>
+                                            {% endfor %}
+                                        {% else %}
+                                            <td colspan="100%" class="text-danger">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                Błąd wiersza - w tym wierszu znajdują się błędne dane
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="100%">
+                                        <div class="float-left">
+                                            <ul class="pagination">
+                                                {% if paginated.page == 1 %}
+                                                    <li class="page-item disabled">
+                                                        <a class="page-link" href="#">Previous</a>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="/?page={{ paginated.page-1 }}{{ currentOrderByQuery }}{{ currentLimitQuery }}">Previous</a>
+                                                    </li>
+                                                {% endif %}
+                                                {% for page in paginated.pagesInRange %}
+                                                    {% if page >= 1 and page <= paginated.totalPages %}
+                                                        {% if page == paginated.page %}
+                                                            <li class="page-item active">
+                                                                <a class="page-link" href="#">{{ page }}</a>
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="page-item"><a class="page-link" href="/?page={{ page }}{{ currentOrderByQuery }}{{ currentLimitQuery }}">{{ page }}</a></li>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if paginated.page == paginated.totalPages %}
+                                                    <li class="page-item disabled">
+                                                        <a class="page-link" href="#">Next</a>
+                                                    </li>
+                                                {% else %}
+                                                    <li class="page-item">
+                                                        <a class="page-link" href="/?page={{ paginated.page+1 }}{{ currentOrderByQuery }}{{ currentLimitQuery }}">Next</a>
+                                                    </li>
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                        <div class="float-right">
+                                            <div class="form-inline">
+                                            <span>Page {{ paginated.page }} of {{ paginated.totalPages }}. Total items: {{ paginated.total }}</span>
+                                            <select id="limit-select" class="form-control" style="margin: 0 10px;">
+                                                <option value="9"{% if paginated.limit == 9 %} selected="selected"{% endif %}>9</option>
+                                                <option value="18"{% if paginated.limit == 18 %} selected="selected"{% endif %}>18</option>
+                                                <option value="36"{% if paginated.limit == 36 %} selected="selected"{% endif %}>36</option>
+                                                <option value="72"{% if paginated.limit == 72 %} selected="selected"{% endif %}>72</option>
+                                                <option value="144"{% if paginated.limit == 144 %} selected="selected"{% endif %}>144</option>
+                                                <option value="288"{% if paginated.limit == 288 %} selected="selected"{% endif %}>288</option>
+                                            </select>
+                                        </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $('#limit-select').change(function() {
+            location.href = '/?limit=' + $(this).val();
+        });
+    </script>
+{% endblock %}
